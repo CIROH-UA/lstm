@@ -1,0 +1,17 @@
+area_sqkm: 1046.78
+basin_id: 5291000
+basin_name: WHETSTONE RIVER NEAR BIG STONE CITY, SD
+elev_mean: 432.13
+initial_state: zero
+lat: 45.29163
+lon: -96.48756
+slope_mean: 8.90129
+time_step: 1 hour
+train_cfg_file:
+- ../trained_neuralhydrology_models/nh_AORC_hourly_25yr_1210_112435_7/config.yml
+- ../trained_neuralhydrology_models/nh_AORC_hourly_25yr_1210_112435_8/config.yml
+- ../trained_neuralhydrology_models/nh_AORC_hourly_25yr_1210_112435_9/config.yml
+- ../trained_neuralhydrology_models/nh_AORC_hourly_25yr_seq999_seed101_0701_143442/config.yml
+- ../trained_neuralhydrology_models/nh_AORC_hourly_25yr_seq999_seed103_2701_171540/config.yml
+- ../trained_neuralhydrology_models/nh_AORC_hourly_slope_elev_precip_temp_seq999_seed101_2801_191806/config.yml
+verbose: 0
