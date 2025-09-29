@@ -59,6 +59,10 @@ import numpy.typing as npt
 import pandas as pd
 import torch
 import yaml
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
 
 from . import nextgen_cuda_lstm
 from .base import BmiBase
@@ -143,7 +147,7 @@ class EnsembleMember:
         # load training feature scales
         scaler_file = cfg["run_dir"] / "train_data/train_data_scaler.yml"
         with scaler_file.open("r") as fp:
-            train_data_scaler = yaml.safe_load(fp)
+            train_data_scaler = yaml.load(fp, Loader=SafeLoader)
         self.scalars = load_training_scalars(cfg, train_data_scaler)
 
         # initialize torch lstm object
@@ -290,14 +294,13 @@ def gather_inputs(
         value = state.value(bmi_name)
         assert value.size == 1, "`value` should a single scalar in a 1d array"
         input_list.append(value[0])
-
-        logger.debug(f"  {lstm_name=}")
-        logger.debug(f"  {bmi_name=}")
-        logger.debug(f"  {type(value)=}")
-        logger.debug(f"  {value=}")
+        logger.debug("  lstm_name=%s", lstm_name)
+        logger.debug("  bmi_name=%s", bmi_name)
+        logger.debug("  type(value)=%s", type(value))
+        logger.debug("  value=%s", value)
 
     collected = bmi_array(input_list)
-    logger.debug(f"Collected inputs: {collected}")
+    logger.debug("Collected inputs: %s",collected)
     return collected
 
 
@@ -310,10 +313,10 @@ def scale_inputs(
 
     # Center and scale the input values for use in torch
     input_array_scaled = (input - mean) / std
-    logger.debug(f"### input_array ={input}")
-    logger.debug(f"### dtype(input_array) ={input.dtype}")
-    logger.debug(f"### type(input_array_scaled) ={type(input_array_scaled)}")
-    logger.debug(f"### dtype(input_array_scaled) ={input_array_scaled.dtype}")
+    logger.debug("### input_array =%s", input)
+    logger.debug("### dtype(input_array) =%s", input.dtype)
+    logger.debug("### type(input_array_scaled) =%s", type(input_array_scaled))
+    logger.debug("### dtype(input_array_scaled) =%s", input_array_scaled.dtype)
     return input_array_scaled
 
 
@@ -324,7 +327,7 @@ def scale_outputs(
     output_std: npt.NDArray,
     output_scale_factor_cms: float,
 ):
-    logger.debug(f"model output: {output[0, 0, 0].numpy().tolist()}")
+    logger.debug("model output: %s", output[0, 0, 0].numpy().tolist())
 
     if cfg["target_variables"][0] in ["qobs_mm_per_hour", "QObs(mm/hr)", "QObs(mm/h)"]:
         surface_runoff_mm = output[0, 0, 0].numpy() * output_std + output_mean
@@ -405,7 +408,7 @@ class bmi_LSTM(BmiBase):
     def initialize(self, config_file: str) -> None:
         # read and setup main configuration file
         with open(config_file, "r") as fp:
-            self.cfg_bmi = yaml.safe_load(fp)
+            self.cfg_bmi = yaml.load(fp, Loader=SafeLoader)
         coerce_config(self.cfg_bmi)
 
         # TODO: aaraney: config logging levels to python logging levels
@@ -422,7 +425,7 @@ class bmi_LSTM(BmiBase):
         # initialize ensemble members
         self.ensemble_members = []
         for member_cfg_file in self.cfg_bmi["train_cfg_file"]:
-            cfg = yaml.safe_load(member_cfg_file.read_text())
+            cfg = yaml.load(member_cfg_file.read_text(), Loader=SafeLoader)
             coerce_config(cfg)
             member = EnsembleMember(cfg, output_factor_cms)
             self.ensemble_members.append(member)
@@ -458,7 +461,7 @@ class bmi_LSTM(BmiBase):
     def update_until(self, time: float) -> None:
         if time <= self.get_current_time():
             current_time = self.get_current_time()
-            logger.warning(f"no update performed: {time=} <= {current_time=}")
+            logger.warning("no update performed: time=%s <= current_time=%s", time, current_time)
             return None
 
         n_steps, remainder = divmod(
@@ -467,7 +470,7 @@ class bmi_LSTM(BmiBase):
 
         if remainder != 0:
             logger.warning(
-                f"time is not multiple of time step size. updating until: {time - remainder=} "
+                "time is not multiple of time step size. updating until: %s", (time - remainder)
             )
 
         for _ in range(int(n_steps)):
